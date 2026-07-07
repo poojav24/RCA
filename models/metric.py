@@ -6,8 +6,8 @@ class Metric:
         name,
         key,
         value_type=None,
-        units=None,
-        lastvalue=None
+        units="",
+        lastvalue=""
     ):
 
         self.itemid = itemid
@@ -19,12 +19,10 @@ class Metric:
 
     def __str__(self):
 
-        return (
-            f"""
-Item ID    : {self.itemid}
-Metric     : {self.name}
-Key        : {self.key}
-Value      : {self.lastvalue}
-Units      : {self.units}
+        return f"""
+Metric
+-------------------------
+Name  : {self.name}
+Key   : {self.key}
+Value : {self.lastvalue} {self.units}
 """
-        )

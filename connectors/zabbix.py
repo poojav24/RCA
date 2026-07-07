@@ -1,4 +1,3 @@
-
 import requests
 
 from models.host import Host
@@ -24,16 +23,30 @@ class ZabbixClient:
     def login(self):
 
         payload = {
+
             "jsonrpc": "2.0",
+
             "method": "user.login",
+
             "params": {
+
                 "username": self.username,
+
                 "password": self.password
+
             },
+
             "id": 1
+
         }
 
-        response = requests.post(self.url, json=payload)
+        response = requests.post(
+
+            self.url,
+
+            json=payload
+
+        )
 
         response.raise_for_status()
 
@@ -56,16 +69,25 @@ class ZabbixClient:
     def _request(self, method, params, request_id):
 
         payload = {
+
             "jsonrpc": "2.0",
+
             "method": method,
+
             "params": params,
+
             "auth": self.auth,
+
             "id": request_id
+
         }
 
         response = requests.post(
+
             self.url,
+
             json=payload
+
         )
 
         response.raise_for_status()
@@ -89,13 +111,21 @@ class ZabbixClient:
             "host.get",
 
             {
+
                 "output": [
+
                     "hostid",
+
                     "host",
+
                     "name",
+
                     "status",
+
                     "description"
+
                 ]
+
             },
 
             2
@@ -137,7 +167,9 @@ class ZabbixClient:
             "problem.get",
 
             {
+
                 "output": "extend"
+
             },
 
             3
@@ -169,198 +201,176 @@ class ZabbixClient:
         return problems
 
     # ==========================================================
-    # Triggers
+    # Trigger
     # ==========================================================
 
-    def get_triggers(self):
+    def get_trigger(self, triggerid):
 
         data = self._request(
 
             "trigger.get",
 
             {
+
+                "triggerids": triggerid,
+
                 "output": [
+
                     "triggerid",
+
                     "description",
+
                     "priority",
+
                     "status",
+
                     "expression"
+
+                ],
+
+                "selectItems": [
+
+                    "itemid",
+
+                    "name",
+
+                    "key_"
+
                 ]
+
             },
 
-            4
+            8
 
         )
 
-        triggers = []
+        if not data:
 
-        for t in data:
+            return None
 
-            triggers.append(
+        t = data[0]
 
-                Trigger(
+        items = []
 
-                    t["triggerid"],
+        for item in t.get("items", []):
 
-                    t["description"],
+            items.append(
 
-                    t["priority"],
+                {
 
-                    t["status"],
+                    "itemid": item["itemid"],
 
-                    t["expression"]
+                    "name": item["name"],
 
-                )
+                    "key": item["key_"]
+
+                }
 
             )
 
-        return triggers
+        return Trigger(
 
-# ==========================================================
-# Alerts
-# ==========================================================
+            t["triggerid"],
 
-    def get_alerts(self, limit=20):
+            t["description"],
+
+            t["priority"],
+
+            t["status"],
+
+            t["expression"],
+
+            items
+
+        )
+
+    # ==========================================================
+    # Metrics
+    # ==========================================================
+
+    def get_metrics(self, hostid):
 
         data = self._request(
+            "item.get",
+            {
+                "hostids": hostid,
+                "output": [
+                    "itemid",
+                    "name",
+                    "key_",
+                    "lastvalue",
+                    "units",
+                    "value_type"
+                ]
+            },
+            5
+        )
+        metrics = []
 
+        for item in data:
+            metrics.append(
+                Metric(
+                    item["itemid"],
+                    item["name"],
+                    item["key_"],
+                    item["value_type"],
+                    item.get("units", ""),
+                    item.get("lastvalue", "")
+                )
+            )
+        return metrics
+
+    # ==========================================================
+    # Important Metrics
+    # ==========================================================
+
+    def get_rca_metrics(self, hostid):
+        metrics = self.get_metrics(hostid)
+        keywords = [
+            "cpu",
+            "memory",
+            "mem",
+            "disk",
+            "filesystem",
+            "swap",
+            "network",
+            "net",
+            "service",
+            "process",
+            "load"
+        ]
+        important = []
+        for metric in metrics:
+            text = (
+                metric.name +
+                " " +
+                metric.key
+            ).lower()
+            if any(word in text for word in keywords):
+                important.append(metric)
+        return important
+
+    # ==========================================================
+    # Alerts
+    # ==========================================================
+
+    def get_alerts(self, limit=20):
+        data = self._request(
             "alert.get",
-
             {
                 "output": "extend",
                 "sortfield": "clock",
                 "sortorder": "DESC",
                 "limit": limit
             },
-
             6
-
         )
-
         return data
 
-# ==========================================================
-# Metrics
-# ==========================================================
-
-
-    def get_metrics(self, hostid):
-
-        data = self._request(
-
-            "item.get",
-
-            {
-
-                "hostids": hostid,
-
-                "output": [
-
-                    "itemid",
-
-                    "name",
-
-                    "key_",
-
-                    "lastvalue",
-
-                    "units",
-
-                    "value_type",
-
-                    "lastclock"
-
-                ],
-
-                "sortfield": "name"
-
-            },
-
-            5
-
-        )
-
-        metrics = []
-
-        for m in data:
-
-            metrics.append(
-
-                Metric(
-
-                    m["itemid"],
-
-                    m["name"],
-
-                    m["key_"],
-
-                    m["value_type"],
-
-                    m.get("units", ""),
-
-                    m.get("lastvalue", "")
-
-                )
-
-            )
-
-        return metrics
-
-
     # ==========================================================
-# Important Metrics for RCA
-# ==========================================================
+    # Event
+    # ==========================================================
 
-    def get_rca_metrics(self, hostid):
-
-        metrics = self.get_metrics(hostid)
-
-        keywords = [
-
-            "cpu",
-
-            "memory",
-
-            "mem",
-
-            "disk",
-
-            "filesystem",
-
-            "swap",
-
-            "network",
-
-            "net",
-
-            "service",
-
-            "process",
-
-            "load"
-
-        ]
-
-        important = []
-
-        for metric in metrics:
-
-            text = (
-
-                metric.name +
-
-                " " +
-
-                metric.key
-
-            ).lower()
-
-            if any(word in text for word in keywords):
-
-                important.append(metric)
-
-        return important
-    
     def get_event(self, eventid):
 
         data = self._request(
@@ -379,7 +389,7 @@ class ZabbixClient:
 
         )
 
-        if len(data) == 0:
+        if not data:
 
             return None
 

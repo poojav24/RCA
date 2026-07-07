@@ -4,7 +4,9 @@ class MetricService:
 
         self.zabbix = zabbix
 
-    def enrich(self, incident):
+    def collect(self, incident, trigger, playbook):
+
+        print("\nCollecting Metrics...")
 
         host = incident.alert.host
 
@@ -21,12 +23,39 @@ class MetricService:
 
         if hostid is None:
 
-            print("Host not found in Zabbix.")
+            print("Host not found.")
 
             return incident
 
-        metrics = self.zabbix.get_rca_metrics(hostid)
+        all_metrics = self.zabbix.get_metrics(hostid)
 
-        incident.metrics = metrics
+        collected = []
+
+        trigger_key = ""
+
+        if trigger.items:
+            trigger_key = trigger.items[0]["key"]
+
+        for required in playbook["metrics"]:
+
+            if required == "service.info":
+
+                for metric in all_metrics:
+
+                    if metric.key == trigger_key:
+
+                        collected.append(metric)
+                        break
+
+            else:
+
+                for metric in all_metrics:
+
+                    if metric.key.startswith(required):
+
+                        collected.append(metric)
+                        break
+
+        incident.metrics = collected
 
         return incident

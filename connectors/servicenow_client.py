@@ -56,10 +56,40 @@ class ServiceNowClient:
         )
 
         params = {
-            "sysparm_query": query,
-            "sysparm_limit": 5,
-            "sysparm_display_value": "true"
-        }
+
+        "sysparm_query": query,
+
+        "sysparm_limit": 5,
+
+        "sysparm_display_value": "true",
+
+        "sysparm_fields": ",".join([
+
+            "number",
+
+            "short_description",
+
+            "priority",
+
+            "severity",
+
+            "state",
+
+            "assignment_group",
+
+            "assigned_to",
+
+            "opened_by",
+
+            "opened_at",
+
+            "category",
+
+            "subcategory"
+
+        ])
+
+}
 
         return self._get(
             "/api/now/table/incident",

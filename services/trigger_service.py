@@ -1,27 +1,32 @@
 class TriggerService:
 
     def __init__(self, zabbix):
-
         self.zabbix = zabbix
 
     def get_trigger(self, parsed_alert):
 
+        print("\nFinding Trigger...")
+
+        # Original Problem ID itself is the Event ID
         event = self.zabbix.get_event(
-
             parsed_alert.original_problem_id
-
         )
 
         if event is None:
-
+            print("Event not found.")
             return None
 
-        triggers = self.zabbix.get_triggers()
+        print("Event Found")
+        print("Trigger ID :", event.objectid)
 
-        for trigger in triggers:
+        trigger = self.zabbix.get_trigger(
+            event.objectid
+        )
 
-            if trigger.triggerid == event.objectid:
+        if trigger is None:
+            print("Trigger not found.")
+            return None
 
-                return trigger
+        print("Trigger Found")
 
-        return None
+        return trigger
