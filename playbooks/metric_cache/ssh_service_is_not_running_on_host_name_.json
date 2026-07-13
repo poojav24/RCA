@@ -1,0 +1,17 @@
+{
+    "technology": "ssh",
+    "metrics": [
+        {
+            "key": "proc.num[sshd]",
+            "reason": "Checks if the SSH service is running."
+        },
+        {
+            "key": "systemd.service.active_state[ssh.service]",
+            "reason": "Checks the active state of the SSH service."
+        },
+        {
+            "key": "net.tcp.listen[22]",
+            "reason": "Checks if the SSH port is listening."
+        }
+    ]
+}

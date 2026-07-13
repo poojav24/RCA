@@ -17,7 +17,6 @@ class MetricService:
         for h in hosts:
 
             if h.host == host or h.name == host:
-
                 hostid = h.hostid
                 break
 
@@ -36,9 +35,12 @@ class MetricService:
         if trigger.items:
             trigger_key = trigger.items[0]["key"]
 
-        for required in playbook["metrics"]:
+        for metric_info in playbook["metrics"]:
 
-            if required == "service.info":
+            required_key = metric_info["key"]
+
+            # Exact match for the triggered service metric
+            if required_key == "service.info":
 
                 for metric in all_metrics:
 
@@ -51,7 +53,11 @@ class MetricService:
 
                 for metric in all_metrics:
 
-                    if metric.key.startswith(required):
+                    if (
+                        metric.key == required_key
+                        or
+                        metric.key.startswith(required_key)
+                    ):
 
                         collected.append(metric)
                         break

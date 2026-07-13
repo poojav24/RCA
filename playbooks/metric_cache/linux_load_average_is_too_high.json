@@ -1,0 +1,25 @@
+{
+    "technology": "linux",
+    "metrics": [
+        {
+            "key": "system.cpu.load[all,avg1]",
+            "reason": "Checks the current CPU load average."
+        },
+        {
+            "key": "system.cpu.load[all,avg5]",
+            "reason": "Checks the 5-minute CPU load average for comparison."
+        },
+        {
+            "key": "system.cpu.util[,iowait]",
+            "reason": "Checks if the high load is due to disk I/O wait."
+        },
+        {
+            "key": "vfs.fs.dependent.size[/,used]",
+            "reason": "Checks if the disk is running out of space, which could cause high load."
+        },
+        {
+            "key": "proc.num[,,run]",
+            "reason": "Checks the number of running processes, which could contribute to high load."
+        }
+    ]
+}

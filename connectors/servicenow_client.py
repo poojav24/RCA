@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class ServiceNowClient:
@@ -9,6 +9,10 @@ class ServiceNowClient:
         self.base_url = base_url
         self.username = username
         self.password = password
+
+    # ==========================================================
+    # Generic GET
+    # ==========================================================
 
     def _get(self, endpoint, params=None):
 
@@ -27,14 +31,19 @@ class ServiceNowClient:
 
         return response.json()["result"]
 
+    # ==========================================================
+    # Correlate Incident
+    # ==========================================================
+
     def correlate_incident(
         self,
+        original_problem_id,
         host,
         problem,
         started_time
     ):
 
-        # Convert string to datetime if needed
+        # Convert string to datetime if required
         if isinstance(started_time, str):
 
             try:
@@ -42,54 +51,65 @@ class ServiceNowClient:
                     started_time,
                     "%Y-%m-%d %H:%M:%S"
                 )
-            except:
+            except Exception:
                 pass
 
-        # Optional time window (currently not used in query)
-        if isinstance(started_time, datetime):
-            start = started_time - timedelta(minutes=2)
-            end = started_time + timedelta(minutes=2)
+        # ------------------------------------------------------
+        # First search using Original Problem ID
+        # ------------------------------------------------------
+
+        query = (
+            f"descriptionLIKEOriginal problem ID: {original_problem_id}"
+        )
+
+        params = {
+
+            "sysparm_query": query,
+
+            "sysparm_limit": 1,
+
+            "sysparm_display_value": "true",
+
+            "sysparm_fields": ",".join([
+
+                "number",
+                "short_description",
+                "priority",
+                "severity",
+                "state",
+                "assignment_group",
+                "assigned_to",
+                "opened_by",
+                "opened_at",
+                "category",
+                "subcategory"
+
+            ])
+
+        }
+
+        result = self._get(
+            "/api/now/table/incident",
+            params
+        )
+
+        # ------------------------------------------------------
+        # Found exact incident
+        # ------------------------------------------------------
+
+        if result:
+            return result
+
+        # ------------------------------------------------------
+        # Fallback using Host + Problem
+        # ------------------------------------------------------
 
         query = (
             f"descriptionLIKE{host}"
             f"^short_descriptionLIKE{problem}"
         )
 
-        params = {
-
-        "sysparm_query": query,
-
-        "sysparm_limit": 5,
-
-        "sysparm_display_value": "true",
-
-        "sysparm_fields": ",".join([
-
-            "number",
-
-            "short_description",
-
-            "priority",
-
-            "severity",
-
-            "state",
-
-            "assignment_group",
-
-            "assigned_to",
-
-            "opened_by",
-
-            "opened_at",
-
-            "category",
-
-            "subcategory"
-
-        ])
-
-}
+        params["sysparm_query"] = query
 
         return self._get(
             "/api/now/table/incident",

@@ -13,18 +13,14 @@ class CorrelationService:
 
         matches = self.snow.correlate_incident(
 
+            original_problem_id=parsed_alert.original_problem_id,
             host=parsed_alert.host,
-
             problem=parsed_alert.problem,
-
             started_time=parsed_alert.started_time
-
         )
-
         if matches:
 
             incident.snow = matches[0]
-
             print("✓ Matching ServiceNow Incident Found")
 
         else:

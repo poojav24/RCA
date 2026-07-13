@@ -1,0 +1,25 @@
+{
+    "technology": "linux",
+    "metrics": [
+        {
+            "key": "system.cpu.util",
+            "reason": "Checks CPU utilization."
+        },
+        {
+            "key": "system.cpu.util[,user]",
+            "reason": "Checks user-level CPU utilization."
+        },
+        {
+            "key": "system.cpu.util[,system]",
+            "reason": "Checks system-level CPU utilization."
+        },
+        {
+            "key": "proc.num",
+            "reason": "Checks the number of processes."
+        },
+        {
+            "key": "proc.num[,,run]",
+            "reason": "Checks the number of running processes."
+        }
+    ]
+}

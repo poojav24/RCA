@@ -1,0 +1,17 @@
+{
+    "technology": "redis",
+    "metrics": [
+        {
+            "key": "redis.ping[{$REDIS.CONN.URI},{$REDIS.PASSWORD},{$REDIS.USERNAME}]",
+            "reason": "Checks if Redis is reachable."
+        },
+        {
+            "key": "proc.num[{$REDIS.PROCESS_NAME}]",
+            "reason": "Checks if the Redis process is running."
+        },
+        {
+            "key": "systemd.service.active_state[redis-server.service]",
+            "reason": "Checks the status of the Redis service."
+        }
+    ]
+}

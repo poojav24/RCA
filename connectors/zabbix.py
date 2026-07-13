@@ -228,14 +228,15 @@ class ZabbixClient:
 
                 ],
 
-                "selectItems": [
+                "selectItems":[
 
-                    "itemid",
+                        "itemid",
 
-                    "name",
+                        "hostid",
 
-                    "key_"
+                        "name",
 
+                        "key_"
                 ]
 
             },
@@ -259,6 +260,8 @@ class ZabbixClient:
                 {
 
                     "itemid": item["itemid"],
+
+                    "hostid": item["hostid"],
 
                     "name": item["name"],
 
@@ -355,16 +358,33 @@ class ZabbixClient:
     # ==========================================================
 
     def get_alerts(self, limit=20):
+
         data = self._request(
+
             "alert.get",
+
             {
+
                 "output": "extend",
-                "sortfield": "clock",
+
+                "sortfield": "alertid",
+
                 "sortorder": "DESC",
-                "limit": limit
+
+                "limit": limit,
+
+                "filter": {
+
+                    "status": "1"
+
+                }
+
             },
+
             6
+
         )
+
         return data
 
     # ==========================================================
@@ -406,3 +426,32 @@ class ZabbixClient:
             e["clock"]
 
         )
+
+    def get_item_by_key(self, hostid, item_key):
+
+        data = self._request(
+            "item.get",
+            {
+                "hostids": hostid,
+                "output": [
+                    "itemid",
+                    "name",
+                    "key_"
+                ],
+                "search": {
+                    "key_": item_key
+                }
+            },
+            9
+        )
+
+        if data:
+            return data[0]
+
+        return None
+
+    def get_available_metric_keys(self, hostid):
+
+        metrics = self.get_metrics(hostid)
+
+        return [metric.key for metric in metrics]
