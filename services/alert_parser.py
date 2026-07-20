@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 
 from models.parsed_alert import ParsedAlert
@@ -14,6 +13,29 @@ class AlertParser:
         operational_data = ""
         started_time = None
         problem_id = ""
+
+        # ------------------------------------------------------
+        # Detect Event Type
+        # ------------------------------------------------------
+
+        event_type = "PROBLEM"
+
+        subject = alert.subject.lower()
+        message = alert.message.lower()
+
+        if (
+            "resolved" in subject or
+            "recovered" in subject or
+            "recovery" in subject or
+            "resolved" in message or
+            "recovered" in message or
+            "problem has been resolved" in message
+        ):
+            event_type = "RESOLVED"
+
+        # ------------------------------------------------------
+        # Parse Alert Message
+        # ------------------------------------------------------
 
         lines = alert.message.splitlines()
 
@@ -70,13 +92,22 @@ class AlertParser:
 
         return ParsedAlert(
 
-            alert.alertid,
-            alert.eventid,
-            host,
-            problem,
-            severity,
-            operational_data,
-            started_time,
-            problem_id
+            alertid=alert.alertid,
+
+            eventid=alert.eventid,
+
+            host=host,
+
+            problem=problem,
+
+            severity=severity,
+
+            operational_data=operational_data,
+
+            started_time=started_time,
+
+            original_problem_id=problem_id,
+
+            event_type=event_type
 
         )

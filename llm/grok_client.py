@@ -1,6 +1,6 @@
 import json
 from openai import OpenAI
-
+# from config import RCA_MODEL
 
 class GrokClient:
 
@@ -86,7 +86,7 @@ Return exactly in the following format:
 """
 
         response = self.client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+            model="openai/gpt-oss-20b",
             temperature=0,
             messages=[
                 {

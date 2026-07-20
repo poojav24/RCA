@@ -1,0 +1,177 @@
+{
+    "technology": "redis",
+    "collector": "systemd",
+    "confidence": 0.97,
+    "metrics": [
+        {
+            "key": "systemd.service.active_state[\"redis-server.service\"]",
+            "reason": "Shows whether the Redis systemd unit is active (running) or not \u2013 the primary indicator of the failure.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.load_state[\"redis-server.service\"]",
+            "reason": "Indicates if the unit file was successfully loaded; a failed load could prevent the service from starting.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.uptime[\"redis-server.service\"]",
+            "reason": "Shows how long the service has been up; a value of 0 confirms it never started or stopped recently.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.unitfile_state[\"redis-server.service\"]",
+            "reason": "Verifies the unit file state (enabled/disabled/static); mis\u2011configuration can stop the service from being started automatically.",
+            "priority": "High"
+        },
+        {
+            "key": "proc.cpu.util[\"{$REDIS.PROCESS_NAME}\"]",
+            "reason": "CPU usage of the Redis process \u2013 helps detect if the process is alive but stuck or throttled.",
+            "priority": "High"
+        },
+        {
+            "key": "proc.mem[\"{$REDIS.PROCESS_NAME}\",,,,rss]",
+            "reason": "Resident memory size of the Redis process; abnormal values may indicate OOM or memory\u2011related crashes.",
+            "priority": "High"
+        },
+        {
+            "key": "proc.mem[\"{$REDIS.PROCESS_NAME}\",,,,vsize]",
+            "reason": "Virtual memory size of the Redis process; useful for spotting memory leaks before the process dies.",
+            "priority": "Medium"
+        },
+        {
+            "key": "proc.num[\"{$REDIS.PROCESS_NAME}\"]",
+            "reason": "Number of Redis processes; zero confirms the process is not running.",
+            "priority": "Critical"
+        },
+        {
+            "key": "redis.server.uptime",
+            "reason": "Uptime reported by Redis itself; if the service is down this metric will be missing or stale.",
+            "priority": "Critical"
+        },
+        {
+            "key": "redis.server.redis_version",
+            "reason": "Version information \u2013 useful when correlating known bugs with the observed failure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.memory.used_memory",
+            "reason": "Total memory used by Redis; high usage can trigger OOM kills causing the service to stop.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.memory.used_memory_rss",
+            "reason": "Resident set size of Redis memory; helps differentiate between allocated vs. actually used memory.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.memory.maxmemory",
+            "reason": "Configured maxmemory limit; if reached Redis may start evicting keys or abort.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.memory.fragmentation_ratio",
+            "reason": "Memory fragmentation; extreme fragmentation can cause performance degradation and crashes.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.clients.connected",
+            "reason": "Number of client connections; a sudden drop to zero may indicate the server stopped accepting connections.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.clients.blocked",
+            "reason": "Number of blocked clients; high values can indicate long\u2011running commands that may stall the server.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.stats.total_commands_processed",
+            "reason": "Cumulative command count; a flat line suggests the server is not processing any commands.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.stats.instantaneous_ops.rate",
+            "reason": "Current operations per second; useful to see if the service was under heavy load before stopping.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.stats.keyspace_hits",
+            "reason": "Cache hit count; helps assess workload characteristics before the outage.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.stats.keyspace_misses",
+            "reason": "Cache miss count; together with hits can indicate abnormal access patterns preceding failure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.persistence.rdb_last_save_time",
+            "reason": "Timestamp of the last successful RDB snapshot; if too old, persistence may be failing and causing restarts.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.persistence.rdb_last_bgsave_status",
+            "reason": "Result of the last background save (OK/ERR); errors may have caused the service to abort.",
+            "priority": "High"
+        },
+        {
+            "key": "redis.persistence.rdb_bgsave_in_progress",
+            "reason": "Indicates whether a background save is currently running; a stuck save can block the process.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.replication.role",
+            "reason": "Shows if the instance is master or replica; role changes can trigger restarts.",
+            "priority": "Medium"
+        },
+        {
+            "key": "redis.replication.connected_slaves",
+            "reason": "Number of connected replicas; a sudden drop may indicate network or replication issues causing the master to stop.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Overall CPU utilization; high CPU can cause the Redis process to be killed or fail to start.",
+            "priority": "High"
+        },
+        {
+            "key": "system.cpu.load[all,avg1]",
+            "reason": "1\u2011minute load average; spikes may correlate with the service crash.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vm.memory.util",
+            "reason": "Overall memory usage; low free memory can lead to OOM termination of Redis.",
+            "priority": "High"
+        },
+        {
+            "key": "vm.memory.size[available]",
+            "reason": "Amount of memory available for new processes; helps verify if memory pressure caused the stop.",
+            "priority": "High"
+        },
+        {
+            "key": "system.swap.size[,free]",
+            "reason": "Free swap space; insufficient swap can exacerbate memory pressure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.dev.util[sda]",
+            "reason": "I/O utilization of the primary disk; high I/O can delay Redis writes and trigger failures.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.dev.util[sdb]",
+            "reason": "I/O utilization of the secondary disk (if used for persistence); same rationale as above.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.in[\"eth0\"]",
+            "reason": "Incoming network traffic; a drop may indicate network issues preventing Redis from accepting connections.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.out[\"eth0\"]",
+            "reason": "Outgoing network traffic; helps correlate network saturation with service failure.",
+            "priority": "Medium"
+        }
+    ]
+}

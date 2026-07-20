@@ -1,5 +1,5 @@
 import json
-
+# from config import RCA_MODEL
 
 class LogSummarizer:
 

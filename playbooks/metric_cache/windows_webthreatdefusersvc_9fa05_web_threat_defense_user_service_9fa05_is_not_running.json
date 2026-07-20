@@ -1,0 +1,197 @@
+{
+    "technology": "windows_service",
+    "collector": "windows_service",
+    "confidence": 0.96,
+    "metrics": [
+        {
+            "key": "service.info[\"webthreatdefusersvc_9fa05\",state]",
+            "reason": "Current state of the failing Web Threat Defense User Service; confirms it is stopped.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"WinDefend\",state]",
+            "reason": "Microsoft Defender service; a dependency for the web threat service. If stopped, it can cause the user service to stop.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"BFE\",state]",
+            "reason": "Base Filtering Engine \u2013 required for network filtering used by Defender. Its failure often leads to Defender services stopping.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"mpssvc\",state]",
+            "reason": "Windows Firewall service; interacts with BFE and Defender. Issues here may cascade to the web threat service.",
+            "priority": "High"
+        },
+        {
+            "key": "service.info[\"RpcSs\",state]",
+            "reason": "Remote Procedure Call service; many Windows services depend on it. Its failure can cause other services to stop unexpectedly.",
+            "priority": "High"
+        },
+        {
+            "key": "service.info[\"EventLog\",state]",
+            "reason": "Windows Event Log service; if unavailable, services may fail to start or report errors.",
+            "priority": "High"
+        },
+        {
+            "key": "service.info[\"W32Time\",state]",
+            "reason": "Time service; time sync problems can affect service start\u2011up logic.",
+            "priority": "Medium"
+        },
+        {
+            "key": "service.info[\"LanmanWorkstation\",state]",
+            "reason": "Network client service; required for any network communication the web threat service may perform.",
+            "priority": "Medium"
+        },
+        {
+            "key": "service.info[\"WpnService\",state]",
+            "reason": "Push Notification service; sometimes used by security agents for cloud communication.",
+            "priority": "Medium"
+        },
+        {
+            "key": "service.info[\"Zabbix Agent 2\",state]",
+            "reason": "Monitoring agent itself; ensures that metric collection is still functional for further analysis.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Overall CPU utilization; high CPU can prevent services from starting or cause them to crash.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% User Time\"]",
+            "reason": "User\u2011mode CPU time; spikes may indicate workload that starves the service.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% Privileged Time\"]",
+            "reason": "Kernel\u2011mode CPU time; high values can affect service stability.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% DPC Time\"]",
+            "reason": "Deferred Procedure Call time; excessive DPC can indicate driver/network issues impacting services.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% Interrupt Time\"]",
+            "reason": "Interrupt handling time; high interrupt load can degrade service performance.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\System\\Context Switches/sec\"]",
+            "reason": "Rate of context switches; very high rates may signal CPU contention affecting service threads.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\System\\Processor Queue Length\"]",
+            "reason": "Number of threads waiting for CPU; a sustained high queue length indicates CPU bottleneck.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Pages/sec\"]",
+            "reason": "Rate of memory pages being read/written; high paging can cause service latency or failure.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Page Faults/sec\"]",
+            "reason": "Page fault rate; elevated faults suggest memory pressure that could stop services.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Free System Page Table Entries\"]",
+            "reason": "Availability of system page table entries; low values can prevent new processes from starting.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Cache Bytes\"]",
+            "reason": "Size of the system cache; helps assess overall memory health.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Pool Nonpaged Bytes\"]",
+            "reason": "Non\u2011paged pool usage; exhaustion can cause driver/service failures.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Paging file(_Total)\\% Usage\"]",
+            "reason": "Paging file utilization; high usage indicates memory pressure that may force services to stop.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\% Idle Time\",60]",
+            "reason": "Disk idle time on C:; low idle time signals heavy I/O which can delay service start\u2011up.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\Avg. Disk sec/Read\",60]",
+            "reason": "Average read latency on C:; high latency can affect services that read configuration files.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\Avg. Disk sec/Write\",60]",
+            "reason": "Average write latency on C:; relevant for services that write logs or state.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\Current Disk Queue Length\",60]",
+            "reason": "Number of pending I/O operations on C:; a long queue indicates I/O bottleneck.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\Disk Reads/sec\",60]",
+            "reason": "Read IOPS on C:; helps correlate I/O load with service behavior.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(0 C:)\\Disk Writes/sec\",60]",
+            "reason": "Write IOPS on C:; same rationale as reads.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\PhysicalDisk(1 D:)\\% Idle Time\",60]",
+            "reason": "Disk idle time on D:; if the service stores data on D:, this metric is relevant.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,free]",
+            "reason": "Free space on C: drive; insufficient space can prevent service from writing logs or temp files.",
+            "priority": "High"
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,pused]",
+            "reason": "Percentage of used space on C:; helps quickly spot low\u2011disk\u2011space conditions.",
+            "priority": "High"
+        },
+        {
+            "key": "vfs.fs.dependent.size[D:,free]",
+            "reason": "Free space on D: drive; relevant if the service uses D: for data.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.swap.free",
+            "reason": "Available swap; low swap can indicate memory exhaustion.",
+            "priority": "High"
+        },
+        {
+            "key": "system.uptime",
+            "reason": "Host uptime; a recent reboot may explain why a service is not running.",
+            "priority": "Medium"
+        },
+        {
+            "key": "agent.ping",
+            "reason": "Confirms the Zabbix agent is reachable; ensures collected metrics are reliable.",
+            "priority": "Critical"
+        },
+        {
+            "key": "net.if.in[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Network receive errors; network issues can affect services that communicate with cloud endpoints.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.out[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Network transmit errors; same relevance as above.",
+            "priority": "Medium"
+        }
+    ]
+}

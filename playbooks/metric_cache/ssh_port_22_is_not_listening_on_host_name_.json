@@ -1,0 +1,12 @@
+{
+    "technology": "SSH",
+    "collector": "Zabbix",
+    "confidence": 0.95,
+    "metrics": [
+        "net.tcp.listen[22]",
+        "systemd.service.active_state[sshd.service]",
+        "systemd.service.load_state[sshd.service]",
+        "systemd.service.unitfile_state[sshd.service]",
+        "systemd.socket.conn_accepted.rate[ssh.socket]"
+    ]
+}

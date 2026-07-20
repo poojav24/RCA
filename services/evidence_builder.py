@@ -34,7 +34,18 @@ class EvidenceBuilder:
 
             "playbook": playbook,
 
-            "metrics": incident.metrics,
+            "metrics": [
+
+                {
+                    "name": m.name,
+                    "key": m.key,
+                    "value": m.lastvalue,
+                    "units": m.units
+                }
+
+                for m in incident.metrics
+
+            ],
 
             "logs": {
 

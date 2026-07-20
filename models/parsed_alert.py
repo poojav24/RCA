@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class ParsedAlert:
 
     def __init__(
@@ -18,7 +21,9 @@ class ParsedAlert:
 
         started_time,
 
-        original_problem_id
+        original_problem_id,
+
+        event_type
 
     ):
 
@@ -30,16 +35,19 @@ class ParsedAlert:
         self.severity = severity
         self.operational_data = operational_data
 
-        # KEEP DATETIME OBJECT
         self.started_time = started_time
 
         self.original_problem_id = original_problem_id
+
+        self.event_type = event_type
 
     def __str__(self):
 
         return f"""
 
 ==================================================
+
+Event Type        : {self.event_type}
 
 Host              : {self.host}
 

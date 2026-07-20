@@ -1,0 +1,147 @@
+{
+    "technology": "windows_service",
+    "collector": "windows_service",
+    "confidence": 0.96,
+    "metrics": [
+        {
+            "key": "service.info[\"neo4j\",state]",
+            "reason": "Primary indicator \u2013 shows whether the Neo4j service is running or stopped.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"RpcSs\",state]",
+            "reason": "Remote Procedure Call service; many Windows services depend on it. If RPC is down, Neo4j may fail to start.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"LanmanServer\",state]",
+            "reason": "Server service \u2013 provides SMB shares used by Neo4j for data files. Its status can affect service start\u2011up.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"LanmanWorkstation\",state]",
+            "reason": "Workstation service \u2013 required for network file access. Issues here can prevent Neo4j from accessing its data directory.",
+            "priority": "Critical"
+        },
+        {
+            "key": "service.info[\"WindowsAzureGuestAgent\",state]",
+            "reason": "Azure Guest Agent interacts with the underlying VM platform; failures may indicate broader VM issues that affect Neo4j.",
+            "priority": "High"
+        },
+        {
+            "key": "service.info[\"Zabbix Agent 2\",state]",
+            "reason": "Zabbix agent itself; if it is not running, metric collection may be incomplete, affecting RCA reliability.",
+            "priority": "High"
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Overall CPU utilization \u2013 high CPU can prevent services from starting or cause timeouts.",
+            "priority": "Critical"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% Privileged Time\"]",
+            "reason": "Shows time spent in kernel mode; spikes may indicate service start\u2011up contention.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Processor Information(_total)\\% User Time\"]",
+            "reason": "User\u2011mode CPU usage; helps correlate CPU pressure with service failure.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\System\\Processor Queue Length\"]",
+            "reason": "Length of the ready queue; a high value indicates CPU scheduling bottlenecks that can delay service start.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Pages/sec\"]",
+            "reason": "Rate of page reads/writes; elevated values suggest memory pressure that could affect Neo4j.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Memory\\Page Faults/sec\"]",
+            "reason": "Number of page faults per second; high faults indicate insufficient RAM for Neo4j.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\Paging file(_Total)\\% Usage\"]",
+            "reason": "Paging file usage; excessive paging can degrade performance and prevent service start.",
+            "priority": "High"
+        },
+        {
+            "key": "vm.memory.util",
+            "reason": "Overall memory utilization percentage; helps confirm if the host is out of RAM.",
+            "priority": "Critical"
+        },
+        {
+            "key": "vm.memory.size[used]",
+            "reason": "Absolute amount of RAM used; useful together with total size for capacity analysis.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vm.memory.size[total]",
+            "reason": "Total RAM installed; required to calculate utilization and assess if memory is a limiting factor.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.swap.pfree",
+            "reason": "Percentage of free swap space; low free swap can indicate memory exhaustion.",
+            "priority": "High"
+        },
+        {
+            "key": "system.swap.free",
+            "reason": "Absolute free swap space; complements the percentage metric.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,pused]",
+            "reason": "Percentage of used space on C: drive where Neo4j binaries/logs often reside.",
+            "priority": "Critical"
+        },
+        {
+            "key": "vfs.fs.dependent.size[D:,pused]",
+            "reason": "Percentage of used space on D: drive where Neo4j data directory is commonly placed.",
+            "priority": "Critical"
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,free]",
+            "reason": "Free space on C: \u2013 ensures there is room for logs and temporary files.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.fs.dependent.size[D:,free]",
+            "reason": "Free space on D: \u2013 critical for Neo4j data writes.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.in[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Inbound network errors on the primary NIC; network issues can prevent Neo4j from binding to its port.",
+            "priority": "High"
+        },
+        {
+            "key": "net.if.out[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Outbound network errors; may affect cluster communication or client connections.",
+            "priority": "High"
+        },
+        {
+            "key": "net.if.status[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\"]",
+            "reason": "Operational status of the NIC (up/down). A down interface would explain service unavailability.",
+            "priority": "Critical"
+        },
+        {
+            "key": "system.uptime",
+            "reason": "Host uptime; a recent reboot could explain why Neo4j has not yet started.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.hostname",
+            "reason": "Identifies the host in multi\u2011host environments; useful for correlating logs.",
+            "priority": "Low"
+        },
+        {
+            "key": "agent.ping",
+            "reason": "Confirms Zabbix agent connectivity; if false, metric collection may be incomplete.",
+            "priority": "Low"
+        }
+    ]
+}

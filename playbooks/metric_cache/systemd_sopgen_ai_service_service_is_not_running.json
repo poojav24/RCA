@@ -1,0 +1,87 @@
+{
+    "technology": "linux_systemd_service",
+    "collector": "systemd",
+    "confidence": 0.97,
+    "metrics": [
+        {
+            "key": "systemd.service.active_state[\"sopgen-ai.service\"]",
+            "reason": "Shows the current active state (running, exited, failed, etc.) of the service that triggered the alert.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.load_state[\"sopgen-ai.service\"]",
+            "reason": "Indicates whether the unit file was successfully loaded; a bad load state can prevent the service from starting.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.unitfile_state[\"sopgen-ai.service\"]",
+            "reason": "Shows the enable/disable state of the unit file; a disabled or masked unit cannot be started automatically.",
+            "priority": "High"
+        },
+        {
+            "key": "systemd.service.uptime[\"sopgen-ai.service\"]",
+            "reason": "Provides the time the service has been up; a very short uptime before failure can hint at rapid crashes.",
+            "priority": "High"
+        },
+        {
+            "key": "systemd.unit.get[\"sopgen-ai.service\"]",
+            "reason": "Returns detailed unit properties (ExecStart, Restart settings, etc.) useful for diagnosing misconfiguration.",
+            "priority": "High"
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Overall CPU utilization; high CPU pressure can cause services to fail to start or be killed.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.cpu.load[all,avg1]",
+            "reason": "1\u2011minute load average; spikes may indicate resource contention affecting the service.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.cpu.load[all,avg5]",
+            "reason": "5\u2011minute load average for trend analysis of sustained load.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.cpu.load[all,avg15]",
+            "reason": "15\u2011minute load average to see longer\u2011term load patterns.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vm.memory.util",
+            "reason": "Percentage of used RAM; low memory can cause the service to be OOM\u2011killed.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.swap.size[,free]",
+            "reason": "Free swap space; insufficient swap can exacerbate memory pressure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.uptime",
+            "reason": "Host uptime; helps correlate service failure with recent reboots or kernel updates.",
+            "priority": "Low"
+        },
+        {
+            "key": "net.if.in[\"eth0\",errors]",
+            "reason": "Incoming interface errors; network issues may prevent the service from binding to ports.",
+            "priority": "Low"
+        },
+        {
+            "key": "net.if.out[\"eth0\",errors]",
+            "reason": "Outgoing interface errors; useful if the service communicates externally.",
+            "priority": "Low"
+        },
+        {
+            "key": "vfs.dev.util[sda]",
+            "reason": "I/O utilization of the primary disk; high I/O can delay service start\u2011up or cause timeouts.",
+            "priority": "Low"
+        },
+        {
+            "key": "vfs.dev.util[sdb]",
+            "reason": "I/O utilization of the secondary disk; same rationale as above.",
+            "priority": "Low"
+        }
+    ]
+}

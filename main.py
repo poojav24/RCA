@@ -1,13 +1,13 @@
 import time
-import json
 from datetime import datetime
 
-
 from config import *
+from config import GROK_API_KEY
 
 import connectors.zabbix
 from connectors.zabbix import ZabbixClient
 from connectors.servicenow_client import ServiceNowClient
+from connectors.loki_client import LokiConnector
 
 from services.alert_service import AlertService
 from services.alert_parser import AlertParser
@@ -15,21 +15,19 @@ from services.correlation_service import CorrelationService
 from services.trigger_service import TriggerService
 from services.playbook_service import PlaybookService
 from services.metric_service import MetricService
-from services.metric_validator import MetricValidator
-# from llm.grok_client import GrokClient
-# from playbooks.registry import PlaybookRegistry
-from llm.grok_client import GrokClient
-from config import GROK_API_KEY
-from connectors.loki_client import LokiConnector
-from services.log_fetcher import LogFetcher
-from processor.log_processor import LogProcessor
-from llm.log_summarizer import LogSummarizer
+from services.problem_pipeline import ProblemPipeline
 from services.evidence_builder import EvidenceBuilder
 from services.rca_service import RCAService
-from exceptions.loki_exceptions import LokiHostNotFoundException
+from services.log_fetcher import LogFetcher
+from services.resolution_pipeline import ResolutionPipeline
 
-# grok = GrokClient(GROK_API_KEY)
+from processor.log_processor import LogProcessor
 
+from llm.grok_client import GrokClient
+from llm.log_summarizer import LogSummarizer
+
+from repositories.rca_repository import RCARepository
+from repositories.dedup_repository import DedupRepository
 
 print("Using:", connectors.zabbix.__file__)
 
@@ -62,37 +60,80 @@ def main():
         SNOW_PASSWORD
     )
 
+    loki = LokiConnector(LOKI_URL)
+
     # ----------------------------------------------------
     # Services
     # ----------------------------------------------------
+
     alert_service = AlertService(zabbix)
+
     parser = AlertParser()
+
     correlation_service = CorrelationService(snow)
+
     trigger_service = TriggerService(zabbix)
 
-    # LLM Components
     grok_client = GrokClient(GROK_API_KEY)
+
+    playbook_service = PlaybookService(
+        zabbix,
+        grok_client
+    )
+
+    metric_service = MetricService(zabbix)
 
     evidence_builder = EvidenceBuilder()
 
     rca_service = RCAService(grok_client)
-    
-    playbook_service = PlaybookService(
-        zabbix,
-        grok_client,
-    )
 
-    metric_service = MetricService(zabbix) 
-        # Highest processed alert id
-    last_alert_id = 0
-
-    loki = LokiConnector(LOKI_URL)
+    rca_repository = RCARepository()
 
     log_fetcher = LogFetcher(loki)
 
     log_processor = LogProcessor()
 
     log_summarizer = LogSummarizer(grok_client)
+
+    dedup_repository = DedupRepository()
+    repository = RCARepository()
+
+# dedup_repository = DedupRepository()
+
+    # ----------------------------------------------------
+    # Problem Pipeline
+    # ----------------------------------------------------
+
+    problem_pipeline = ProblemPipeline(
+        correlation_service,
+        trigger_service,
+        playbook_service,
+        metric_service,
+        log_fetcher,
+        log_processor,
+        log_summarizer,
+        evidence_builder,
+        rca_service,
+        repository,
+        dedup_repository
+    )
+
+    resolution_pipeline = ResolutionPipeline(
+        correlation_service,
+        repository,
+        snow,
+        dedup_repository
+    )
+
+    # ----------------------------------------------------
+    # Highest processed alert
+    # ----------------------------------------------------
+
+    last_alert_id = 0
+
+    # ----------------------------------------------------
+    # Poll Loop
+    # ----------------------------------------------------
 
     while True:
 
@@ -108,11 +149,15 @@ def main():
             alerts = alert_service.get_new_alerts()
 
             if not alerts:
+
                 print("No alerts returned.")
+
                 time.sleep(POLL_INTERVAL)
+
                 continue
 
-            # Process oldest -> newest
+            # Oldest -> Newest
+
             alerts = sorted(
                 alerts,
                 key=lambda x: int(x.alertid)
@@ -121,6 +166,7 @@ def main():
             for alert in alerts:
 
                 # Skip already processed alerts
+
                 if int(alert.alertid) <= last_alert_id:
                     continue
 
@@ -131,180 +177,29 @@ def main():
                 print(f"Processing Alert : {alert.alertid}")
                 print("=" * 70)
 
-                # --------------------------------------------------
-                # Parse Alert
-                # --------------------------------------------------
-
                 parsed = parser.parse(alert)
-                
-                parsed.problem
-                parsed.host
-                parsed.original_problem_id
-                # --------------------------------------------------
-                # Correlate ServiceNow
-                # --------------------------------------------------
-
-                incident = correlation_service.correlate(parsed)
 
                 # --------------------------------------------------
-                # Trigger
+                # Later
+                #
+                # if parsed.event_type == "PROBLEM":
+                #     problem_pipeline.run(parsed)
+                #
+                # elif parsed.event_type == "RESOLVED":
+                #     resolution_pipeline.run(parsed)
                 # --------------------------------------------------
 
-                trigger = trigger_service.get_trigger(parsed)
+                if parsed.event_type == "PROBLEM":
 
-                if trigger is None:
-                    continue
+                    problem_pipeline.run(parsed)
 
-                # --------------------------------------------------
-                # Playbook
-                # --------------------------------------------------
+                elif parsed.event_type == "RESOLVED":
 
-                playbook = playbook_service.get_playbook(trigger)
-
-                if playbook is None:
-                    print("No playbook found.")
-                    continue
-
-                # If Generic playbook doesn't contain metrics
-                if "metrics" not in playbook:
-                    print("Playbook has no metrics defined.")
-                    continue
-
-                # --------------------------------------------------
-                # Collect Metrics
-                # --------------------------------------------------
-
-                incident = metric_service.collect(
-                    incident,
-                    trigger,
-                    playbook
-                )
-
-                # --------------------------------------------------
-                # Loki Log Collection (Optional)
-                # --------------------------------------------------
-
-                log_summary = None
-                logs_available = False
-
-                try:
-
-                    logs = log_fetcher.fetch_logs(
-                        host=parsed.host,
-                        event_time=parsed.started_time
-                    )
-
-                    print()
-                    print("=" * 70)
-                    print(f"Fetched {len(logs)} logs from Loki")
-                    print("=" * 70)
-
-                    processed_logs = log_processor.process(logs)
-
-                    log_summary = log_summarizer.summarize(processed_logs)
-
-                    logs_available = True
-
-                except LokiHostNotFoundException as ex:
-
-                    print()
-                    print("=" * 70)
-                    print("LOKI FALLBACK")
-                    print("=" * 70)
-                    print(ex)
-                    print("Continuing RCA using Metrics + ServiceNow only.")
-
-                except Exception as ex:
-
-                    print()
-                    print("=" * 70)
-                    print("LOKI ERROR")
-                    print("=" * 70)
-                    print(ex)
-                    print("Continuing RCA using Metrics + ServiceNow only.")
-
-                # --------------------------------------------------
-                # ServiceNow Details
-                # --------------------------------------------------
-
-                print()
-                print("=" * 70)
-                print("SERVICENOW INCIDENT")
-                print("=" * 70)
-
-                if incident.snow:
-
-                    snow_inc = incident.snow
-
-                    print("Incident Number   :", snow_inc.get("number"))
-                    print("Short Description :", snow_inc.get("short_description"))
-                    print("Priority          :", snow_inc.get("priority"))
-                    print("Severity          :", snow_inc.get("severity"))
-                    print("State             :", snow_inc.get("state"))
-                    print("Assignment Group  :", snow_inc.get("assignment_group"))
-                    print("Assigned To       :", snow_inc.get("assigned_to"))
-                    print("Opened By         :", snow_inc.get("opened_by"))
-                    print("Opened At         :", snow_inc.get("opened_at"))
-                    print("Category          :", snow_inc.get("category"))
-                    print("Subcategory       :", snow_inc.get("subcategory"))
+                    resolution_pipeline.run(parsed)
 
                 else:
 
-                    print("No matching ServiceNow incident found.")
-
-                # --------------------------------------------------
-                # Metrics
-                # --------------------------------------------------
-
-                print()
-                print("=" * 70)
-                print("COLLECTED METRICS")
-                print("=" * 70)
-
-                if incident.metrics:
-
-                    for metric in incident.metrics:
-                        print(metric)
-
-                else:
-
-                    print("No metrics collected.")
-
-                # --------------------------------------------------
-                # Build Evidence
-                # --------------------------------------------------
-
-                print()
-                print("=" * 70)
-                print("BUILDING EVIDENCE")
-                print("=" * 70)
-
-                evidence = evidence_builder.build(
-                    parsed_alert=parsed,
-                    incident=incident,
-                    trigger=trigger,
-                    playbook=playbook,
-                    log_summary=log_summary,
-                    logs_available=logs_available
-                )
-
-                print(evidence_builder.to_json(evidence))
-
-                # --------------------------------------------------
-                # RCA
-                # --------------------------------------------------
-
-                print()
-                print("=" * 70)
-                print("RUNNING RCA")
-                print("=" * 70)
-
-                rca = rca_service.analyze(evidence)
-
-                print(json.dumps(
-                    rca,
-                    indent=4
-                ))
+                    print("Unknown Event Type")
 
             print()
             print(f"Waiting {POLL_INTERVAL} seconds...")
@@ -313,12 +208,17 @@ def main():
             time.sleep(POLL_INTERVAL)
 
         except KeyboardInterrupt:
+
             print("\nStopping RCA Agent...")
+
             break
 
         except Exception as e:
+
             print("\nUnexpected Error:")
+
             print(e)
+
             time.sleep(POLL_INTERVAL)
 
 

@@ -20,6 +20,6 @@ GROK_API_KEY = "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"
 # Loki
 LOKI_URL = "http://172.19.0.9:3100"
 
-LOG_SUMMARIZER_MODEL = "llama-3.1-8b-instant"
-RCA_MODEL = "llama-3.3-70b-versatile"
-# PLAYBOOK_MODEL = "llama-3.3-70b-versatile"
+# LOG_SUMMARIZER_MODEL = "llama-3.1-8b-instant"
+# RCA_MODEL = "llama-3.3-70b-versatile"
+# RCA_MODEL = "qwen3.6-27b"
