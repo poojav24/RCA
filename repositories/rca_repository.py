@@ -155,3 +155,39 @@ class RCARepository:
             "created_at": row[10]
 
         }
+
+    def get_by_host_problem(self, host, problem):
+
+        cursor = self.conn.cursor()
+
+        cursor.execute("""
+        SELECT *
+        FROM rca_results
+        WHERE host=? AND problem=?
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,(
+            host,
+            problem
+        ))
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return {
+
+            "problem_id": row[0],
+            "incident_number": row[1],
+            "host": row[2],
+            "problem": row[3],
+            "root_cause": row[4],
+            "confidence": row[5],
+            "impact": row[6],
+            "reasoning": json.loads(row[7]),
+            "recommended_resolution": json.loads(row[8]),
+            "next_diagnostics": json.loads(row[9]),
+            "created_at": row[10]
+
+        }

@@ -59,16 +59,36 @@ class ResolutionPipeline:
         # Load Stored RCA
         # ==========================================================
 
+        print("\nLoading RCA...")
+
         rca = self.repository.get(parsed.original_problem_id)
+
+        if rca:
+
+            print("✓ RCA found using Problem ID")
+
+        else:
+
+            print("Problem ID not found.")
+
+            print("Trying Host + Problem...")
+
+            rca = self.repository.get_by_host_problem(
+                parsed.host,
+                parsed.problem
+            )
+
+            if rca:
+                print("✓ RCA found using Host + Problem")
 
         if rca is None:
 
-            print("No stored RCA found.")
-            return
+            print("=" * 70)
+            print("No RCA available.")
+            print("Skipping ServiceNow update.")
+            print("=" * 70)
 
-        # ==========================================================
-        # Update ServiceNow
-        # ==========================================================
+            return
 
         self.snow.update_resolution(
 
@@ -77,19 +97,14 @@ class ResolutionPipeline:
             rca=rca
 
         )
-
         print("✓ Incident updated successfully.")
 
         # ==========================================================
         # Mark Duplicate Record as Resolved
         # ==========================================================
 
-        self.dedup_repository.resolve(
-
-            parsed.host,
-
-            parsed.problem
-
-        )
-
-        print("✓ Deduplication record marked as resolved.")
+        if self.dedup_repository:
+            self.dedup_repository.resolve(
+                parsed.host,
+                parsed.problem
+            )

@@ -1,4 +1,6 @@
 import json
+import time
+import traceback
 from openai import OpenAI
 # from config import RCA_MODEL
 
@@ -85,6 +87,8 @@ Return exactly in the following format:
 }}
 """
 
+        request_started = time.perf_counter()
+
         response = self.client.chat.completions.create(
             model="openai/gpt-oss-20b",
             temperature=0,
@@ -96,7 +100,23 @@ Return exactly in the following format:
             ]
         )
 
-        content = response.choices[0].message.content.strip()
+        print(
+            f"[GROK DEBUG] Playbook API latency: {(time.perf_counter() - request_started) * 1000:.2f} ms"
+        )
+
+        content = response.choices[0].message.content
+
+        if content is None:
+            raise Exception("LLM returned no content.")
+
+        content = content.strip()
+
+        print("\n========== RAW LLM RESPONSE ==========")
+        print(repr(content))
+        print("======================================\n")
+
+        if not content:
+            raise Exception("LLM returned an empty response.")
 
         if content.startswith("```"):
             content = (
@@ -109,10 +129,18 @@ Return exactly in the following format:
         try:
             return json.loads(content)
 
+        except json.JSONDecodeError:
+
+            print("\nInvalid JSON received from LLM:\n")
+            print(content)
+            traceback.print_exc()
+
+            raise
         except Exception:
 
             print("\nLLM RESPONSE\n")
             print(content)
+            traceback.print_exc()
 
             raise
 
@@ -127,6 +155,8 @@ Return exactly in the following format:
         model="openai/gpt-oss-120b"
     ):
 
+        request_started = time.perf_counter()
+
         response = self.client.chat.completions.create(
             model=model,
             temperature=0,
@@ -137,5 +167,11 @@ Return exactly in the following format:
                 }
             ]
         )
+
+        print(
+            f"[GROK DEBUG] {model} API latency: {(time.perf_counter() - request_started) * 1000:.2f} ms"
+        )
+
+        # print(response)
 
         return response.choices[0].message.content.strip()

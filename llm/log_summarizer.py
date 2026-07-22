@@ -1,4 +1,5 @@
 import json
+import traceback
 # from config import RCA_MODEL
 
 class LogSummarizer:
@@ -43,6 +44,8 @@ Logs
             return json.loads(response)
 
         except Exception:
+
+            traceback.print_exc()
 
             return {
 

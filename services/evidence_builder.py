@@ -10,7 +10,8 @@ class EvidenceBuilder:
         trigger,
         playbook,
         log_summary,
-        logs_available
+        logs_available,
+        historical_context = None
     ):
 
         evidence = {
@@ -52,7 +53,10 @@ class EvidenceBuilder:
                 "available": logs_available,
                 "summary": log_summary
 
-            }
+            },
+
+            "historical_incidents": historical_context
+            #  historical_context=similar_cases
 
         }
 

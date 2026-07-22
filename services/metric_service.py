@@ -6,6 +6,23 @@ class MetricService:
 
     def collect(self, incident, trigger, playbook):
 
+        print("\n================ DEBUG : METRIC SERVICE ================")
+        print("Type of incident :", type(incident))
+
+        try:
+            print("Incident object :", incident)
+        except Exception as e:
+            print("Unable to print incident:", e)
+
+        if isinstance(incident, dict):
+            print("\nIncident is a DICTIONARY")
+            print("Keys:", incident.keys())
+        else:
+            print("\nIncident attributes:")
+            print(vars(incident))
+
+        print("========================================================\n")
+
         print("\nCollecting Metrics...")
 
         host = incident.alert.host
@@ -39,7 +56,6 @@ class MetricService:
 
             required_key = metric_info["key"]
 
-            # Exact match for the triggered service metric
             if required_key == "service.info":
 
                 for metric in all_metrics:

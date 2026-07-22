@@ -1,4 +1,5 @@
 import time
+import traceback
 from datetime import datetime
 
 from config import *
@@ -20,6 +21,8 @@ from services.evidence_builder import EvidenceBuilder
 from services.rca_service import RCAService
 from services.log_fetcher import LogFetcher
 from services.resolution_pipeline import ResolutionPipeline
+from services.knowledge_service import KnowledgeService
+from services.semantic_search_service import SemanticSearchService
 
 from processor.log_processor import LogProcessor
 
@@ -27,7 +30,9 @@ from llm.grok_client import GrokClient
 from llm.log_summarizer import LogSummarizer
 
 from repositories.rca_repository import RCARepository
-from repositories.dedup_repository import DedupRepository
+from repositories.knowledge_repository import KnowledgeRepository
+
+# from repositories.dedup_repository import DedupRepository
 
 print("Using:", connectors.zabbix.__file__)
 
@@ -95,9 +100,18 @@ def main():
 
     log_summarizer = LogSummarizer(grok_client)
 
-    dedup_repository = DedupRepository()
+    # dedup_repository = DedupRepository()
     repository = RCARepository()
+    knowledge_repository = KnowledgeRepository()
+    knowledge_service = KnowledgeService(
+        knowledge_repository
+    )
 
+    knowledge_repository = KnowledgeRepository()
+
+    semantic_search = SemanticSearchService(
+        knowledge_repository
+    )
 # dedup_repository = DedupRepository()
 
     # ----------------------------------------------------
@@ -115,14 +129,17 @@ def main():
         evidence_builder,
         rca_service,
         repository,
-        dedup_repository
+        knowledge_repository,
+        knowledge_service,
+        semantic_search,
+        None
     )
 
     resolution_pipeline = ResolutionPipeline(
         correlation_service,
         repository,
         snow,
-        dedup_repository
+        None
     )
 
     # ----------------------------------------------------
@@ -191,7 +208,18 @@ def main():
 
                 if parsed.event_type == "PROBLEM":
 
-                    problem_pipeline.run(parsed)
+                    rca_started = time.perf_counter()
+
+                    try:
+
+                        problem_pipeline.run(parsed)
+
+                    finally:
+
+                        print(
+                            f"Total RCA execution time: {(time.perf_counter() - rca_started) * 1000:.2f} ms",
+                            flush=True
+                        )
 
                 elif parsed.event_type == "RESOLVED":
 
@@ -218,6 +246,7 @@ def main():
             print("\nUnexpected Error:")
 
             print(e)
+            traceback.print_exc()
 
             time.sleep(POLL_INTERVAL)
 

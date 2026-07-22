@@ -1,4 +1,8 @@
 from utils.pipeline_logger import PipelineLogger
+import json
+import time
+import traceback
+
 
 class ProblemPipeline:
 
@@ -26,182 +30,253 @@ class ProblemPipeline:
 
         repository,
 
-        dedup_repository
+        knowledge_repository,
+
+        knowledge_service,
+
+        semantic_search,
+
+        dedup_repository=None
 
     ):
 
         self.correlation_service = correlation_service
+
         self.trigger_service = trigger_service
+
         self.playbook_service = playbook_service
+
         self.metric_service = metric_service
 
+
         self.log_fetcher = log_fetcher
+
         self.log_processor = log_processor
+
         self.log_summarizer = log_summarizer
 
+
         self.evidence_builder = evidence_builder
+
         self.rca_service = rca_service
+
 
         self.repository = repository
 
+        self.knowledge_repository = knowledge_repository
+
         self.dedup_repository = dedup_repository
+
+        self.knowledge_service = knowledge_service
+
+        self.semantic_search = semantic_search
+
     # ======================================================
     # Execute Problem Pipeline
     # ======================================================
 
     def run(self, parsed):
 
-        existing = self.dedup_repository.find(
-
-            parsed.host,
-
-            parsed.problem
-
-        )
-
-        if existing and existing[4] == "OPEN":
-
-            print()
-            print("=" * 60)
-            print("DUPLICATE ALERT DETECTED")
-            print("=" * 60)
-
-            self.dedup_repository.increment(
-
-                parsed.host,
-
-                parsed.problem
-
+        PipelineLogger.header(
+            "PROCESSING PROBLEM ALERT"
             )
 
-            latest = self.dedup_repository.find(
-
-                parsed.host,
-
-                parsed.problem
-
+        PipelineLogger.key_value(
+            "Alert ID",
+            parsed.alertid
             )
-
-            print("Occurrences :", latest[3])
-
-            print("Skipping RCA because this problem is already under analysis.")
-
-            return
-        PipelineLogger.header("PROCESSING PROBLEM ALERT")
         
-        PipelineLogger.key_value("Alert ID", parsed.alertid)
-        PipelineLogger.key_value("Host", parsed.host)
-        PipelineLogger.key_value("Problem", parsed.problem)
-        PipelineLogger.key_value("Severity", parsed.severity)
-        PipelineLogger.key_value("Started At", parsed.started_time)
-        PipelineLogger.key_value("Problem ID", parsed.original_problem_id)
+        PipelineLogger.key_value(
+            "Host",
+            parsed.host
+            )
+        PipelineLogger.key_value(
+            "Problem",
+            parsed.problem
+            )
 
-        # ==========================================================
-        # STEP 1 - ServiceNow Correlation
-        # ==========================================================
+        PipelineLogger.key_value(
+          "Severity",
+        parsed.severity
+            )
 
-        PipelineLogger.header("STEP 1 : SERVICENOW CORRELATION")
+        PipelineLogger.key_value(
+           "Problem ID",
+            parsed.original_problem_id
+            )
+
+            # ======================================================
+            # STEP 1 - ServiceNow Correlation
+            # ======================================================
+
+        PipelineLogger.header(
+            "STEP 1 : SERVICENOW CORRELATION"
+            )
+
+        correlation_started = time.perf_counter()
 
         incident = self.correlation_service.correlate(parsed)
 
-        if incident.snow:
-
-            snow = incident.snow
-
-            PipelineLogger.success("Matching Incident Found")
-
-            PipelineLogger.key_value("Incident", snow.get("number"))
-            PipelineLogger.key_value("Priority", snow.get("priority"))
-            PipelineLogger.key_value("Severity", snow.get("severity"))
-            PipelineLogger.key_value("State", snow.get("state"))
-            PipelineLogger.key_value("Assignment Group", snow.get("assignment_group"))
-
-        else:
-
-            PipelineLogger.warning("No matching ServiceNow Incident")
-
-        # ==========================================================
-        # STEP 2 - Knowledge Base Search
-        # ==========================================================
-
-        PipelineLogger.header("STEP 2 : KNOWLEDGE BASE SEARCH")
-
-        PipelineLogger.info("Searching previous RCA...")
-
-        previous_rca = self.repository.get(parsed.original_problem_id)
-
-        if previous_rca:
-
-            PipelineLogger.success("Previous RCA Found")
-
-            PipelineLogger.key_value(
-                "Previous Confidence",
-                f"{previous_rca['confidence']*100:.1f}%"
+        PipelineLogger.key_value(
+            "ServiceNow Correlation",
+            f"{(time.perf_counter() - correlation_started) * 1000:.2f} ms"
             )
 
-            print()
-            print("Previous Root Cause")
-            print(previous_rca["root_cause"])
+        if incident.snow:
+
+            PipelineLogger.success(
+                "ServiceNow Incident Found"
+                )
+
+            PipelineLogger.key_value(
+                "Incident",
+                incident.snow.get("number")
+                )
 
         else:
 
-            PipelineLogger.warning("No Previous RCA Found")
+            PipelineLogger.warning(
+                "No ServiceNow Incident Found"
+                )
 
-        # ==========================================================
-        # STEP 3 - Trigger
-        # ==========================================================
+            
 
-        PipelineLogger.header("STEP 3 : TRIGGER DETAILS")
+            # ======================================================
+            # STEP 3 - Trigger
+            # ======================================================
+
+        PipelineLogger.header(
+            "STEP 3 : TRIGGER DETAILS"
+            )
+
+        trigger_started = time.perf_counter()
 
         trigger = self.trigger_service.get_trigger(parsed)
 
+        PipelineLogger.key_value(
+            "Trigger Lookup",
+            f"{(time.perf_counter() - trigger_started) * 1000:.2f} ms"
+            )
+
         if trigger is None:
 
-            PipelineLogger.warning("Trigger Not Found")
+            PipelineLogger.warning(
+                "Trigger Not Found"
+                )
 
             return
 
-        PipelineLogger.success("Trigger Found")
-
-        PipelineLogger.key_value("Trigger ID", trigger.triggerid)
-        PipelineLogger.key_value("Description", trigger.description)
-
-        if trigger.items:
-
-            PipelineLogger.key_value(
-                "Item Key",
-                trigger.items[0]["key"]
+        PipelineLogger.success(
+            "Trigger Found"
             )
 
-        # ==========================================================
-        # STEP 4 - Playbook
-        # ==========================================================
+            # ======================================================
+            # STEP 4 - Playbook
+            # ======================================================
 
-        PipelineLogger.header("STEP 4 : PLAYBOOK")
+        PipelineLogger.header(
+            "STEP 4 : PLAYBOOK"
+            )
 
-        playbook = self.playbook_service.get_playbook(trigger)
+        playbook_started = time.perf_counter()
+
+        playbook = self.playbook_service.get_playbook(
+            trigger
+            )
+
+        PipelineLogger.key_value(
+            "Playbook Retrieval",
+            f"{(time.perf_counter() - playbook_started) * 1000:.2f} ms"
+            )
 
         if playbook is None:
 
-            PipelineLogger.warning("Playbook Not Found")
+            PipelineLogger.warning(
+                "Playbook Not Found"
+                )
 
             return
 
         PipelineLogger.key_value(
             "Technology",
-            playbook.get("technology", "Unknown")
+            playbook.get("technology")
+            )
+
+        # ======================================================
+        # STEP 5 : KNOWLEDGE BASE SEARCH
+        # ======================================================
+
+        PipelineLogger.header(
+            "STEP 5 : KNOWLEDGE BASE SEARCH"
+        )
+
+        semantic_started = time.perf_counter()
+
+        similar_cases = self.semantic_search.search(
+            parsed,
+            trigger_id=str(trigger.triggerid),
+            technology=playbook.get("technology"),
+            top_k=5
+        )
+
+        semantic_elapsed = time.perf_counter() - semantic_started
+
+        print("\nSimilar Incidents\n")
+
+        for case in similar_cases:
+            print(case["problem"], case["similarity"])
+
+        history_context = self.knowledge_service.build_context(
+            similar_cases
+        )
+
+        historical_cases_json = json.dumps(
+            similar_cases,
+            indent=4,
+            default=str
         )
 
         PipelineLogger.key_value(
-            "Metrics Selected",
-            len(playbook.get("metrics", []))
+            "Semantic Search",
+            f"{semantic_elapsed*1000:.2f} ms"
         )
 
-        # ==========================================================
-        # STEP 5 - Metric Collection
-        # ==========================================================
+        PipelineLogger.key_value(
+            "Historical Cases",
+            len(similar_cases)
+        )
 
-        PipelineLogger.header("STEP 5 : METRIC COLLECTION")
+        PipelineLogger.key_value(
+            "Historical Cases JSON Size",
+            f"{len(historical_cases_json)} chars"
+        )
+
+        if similar_cases:
+            PipelineLogger.success(
+                f"{len(similar_cases)} Similar Incident(s) Found"
+            )
+        else:
+            PipelineLogger.warning(
+                "No Similar Incidents Found"
+            )
+
+        reusable_rca = self.knowledge_service.find_reusable_rca(
+            similar_cases=similar_cases,
+            technology=playbook.get("technology"),
+            trigger_id=str(trigger.triggerid),
+            host=parsed.host
+        )
+
+        
+        # ======================================================
+        # STEP  - Metrics
+        # ======================================================
+
+        PipelineLogger.header(
+            "STEP 6 : METRIC COLLECTION"
+        )
+
+        metric_started = time.perf_counter()
 
         incident = self.metric_service.collect(
             incident,
@@ -209,31 +284,29 @@ class ProblemPipeline:
             playbook
         )
 
-        if incident.metrics:
+        PipelineLogger.key_value(
+            "Metric Collection",
+            f"{(time.perf_counter() - metric_started) * 1000:.2f} ms"
+        )
 
-            for metric in incident.metrics:
+        PipelineLogger.success(
+            f"{len(incident.metrics)} Metrics Collected"
+        )
 
-                PipelineLogger.success(metric.name)
+        # ======================================================
+        # STEP 7 - Logs
+        # ======================================================
 
-            PipelineLogger.key_value(
-                "Collected Metrics",
-                len(incident.metrics)
-            )
-
-        else:
-
-            PipelineLogger.warning("No Metrics Collected")
-
-        # ==========================================================
-        # STEP 6 - Loki Logs
-        # ==========================================================
-
-        PipelineLogger.header("STEP 6 : LOG COLLECTION")
+        PipelineLogger.header(
+            "STEP 7 : LOG COLLECTION"
+        )
 
         logs_available = False
         log_summary = None
 
         try:
+
+            log_started = time.perf_counter()
 
             logs = self.log_fetcher.fetch_logs(
                 host=parsed.host,
@@ -242,107 +315,208 @@ class ProblemPipeline:
 
             processed_logs = self.log_processor.process(logs)
 
-            log_summary = self.log_summarizer.summarize(processed_logs)
+            log_summary = self.log_summarizer.summarize(
+                processed_logs
+            )
 
             logs_available = True
 
-            PipelineLogger.success(f"{len(logs)} Logs Collected")
+            PipelineLogger.success(
+                f"{len(logs)} Logs Collected"
+            )
+
+            PipelineLogger.key_value(
+                "Log Collection",
+                f"{(time.perf_counter()-log_started)*1000:.2f} ms"
+            )
 
         except Exception:
 
             PipelineLogger.warning(
-                "Host not configured in Loki."
+                "Logs unavailable. Continuing with metrics."
             )
 
-            PipelineLogger.info(
-                "Proceeding using Metrics only."
-            )
+            traceback.print_exc()
 
-        # ==========================================================
-        # STEP 7 - Evidence Builder
-        # ==========================================================
+        # ======================================================
+        # STEP 8 - Evidence Builder
+        # ======================================================
 
-        PipelineLogger.header("STEP 7 : EVIDENCE BUILDER")
+        PipelineLogger.header(
+            "STEP 8 : EVIDENCE BUILD"
+        )
+
+        evidence_started = time.perf_counter()
 
         evidence = self.evidence_builder.build(
+
             parsed_alert=parsed,
+
             incident=incident,
+
             trigger=trigger,
+
             playbook=playbook,
+
             log_summary=log_summary,
-            logs_available=logs_available
+
+            logs_available=logs_available,
+
+            historical_context=similar_cases
+
         )
 
-        PipelineLogger.success("Alert")
-        PipelineLogger.success("ServiceNow")
-        PipelineLogger.success("Metrics")
-        PipelineLogger.success("Playbook")
-
-        if logs_available:
-
-            PipelineLogger.success("Logs")
-
-        if previous_rca:
-
-            PipelineLogger.success("Historical RCA")
-
-        import json
+        evidence["historical_incidents"] = history_context
 
         PipelineLogger.key_value(
-            "Evidence Size",
-            f"{len(json.dumps(evidence))/1024:.2f} KB"
+            "Evidence Builder",
+            f"{(time.perf_counter()-evidence_started)*1000:.2f} ms"
         )
 
-        # ==========================================================
-        # STEP 8 - LLM RCA
-        # ==========================================================
-
-        PipelineLogger.header("STEP 8 : LLM RCA")
-
-        PipelineLogger.key_value(
-            "Model",
-            "openai/gpt-oss-120b"
+        PipelineLogger.success(
+            "Evidence Generated"
         )
 
-        if previous_rca:
+        # ======================================================
+        # STEP 8 - RCA
+        # ======================================================
 
-            PipelineLogger.info(
-                "Historical RCA supplied to the LLM for validation."
+        PipelineLogger.header(
+            "STEP 9 : AI ROOT CAUSE ANALYSIS"
+        )
+
+        rca_started = time.perf_counter()
+
+        if reusable_rca is not None:
+
+            similarity = float(
+                reusable_rca["similarity"]
             )
 
-        rca = self.rca_service.analyze(evidence)
+            # --------------------------------------------------
+            # CASE 1
+            # Nearly identical incident
+            # --------------------------------------------------
+
+            if similarity >= 0.95:
+
+                PipelineLogger.success(
+                    f"Reusing Historical RCA "
+                    f"(Similarity={similarity:.3f})"
+                )
+
+                rca = {
+
+                    "root_cause":
+                        reusable_rca["root_cause"],
+
+                    "impact":
+                        reusable_rca.get(
+                            "impact",
+                            ""
+                        ),
+
+                    "confidence":
+                        reusable_rca.get(
+                            "confidence",
+                            0.99
+                        ),
+
+                    "recommended_resolution":
+                        reusable_rca.get(
+                            "recommended_resolution",
+                            []
+                        ),
+
+                    "reasoning":
+                        reusable_rca.get(
+                            "reasoning",
+                            []
+                        )
+
+                }
+
+            # --------------------------------------------------
+            # CASE 2
+            # Similar incident
+            # Give history to LLM
+            # --------------------------------------------------
+
+            elif similarity >= 0.85:
+
+                PipelineLogger.info(
+
+                    f"Historical incident found "
+                    f"(Similarity={similarity:.3f})"
+
+                )
+
+                PipelineLogger.info(
+                    "Calling LLM with historical context..."
+                )
+
+                evidence["historical_incidents"] = history_context
+
+                rca = self.rca_service.analyze(
+                    evidence
+                )
+
+            # --------------------------------------------------
+            # CASE 3
+            # Weak similarity
+            # --------------------------------------------------
+
+            else:
+
+                PipelineLogger.info(
+                    "Similarity too low. Fresh RCA generation."
+                )
+
+                evidence["historical_incidents"] = ""
+
+                rca = self.rca_service.analyze(
+                    evidence
+                )
+
+        else:
+
+            PipelineLogger.info(
+                "No historical incident found."
+            )
+
+            evidence["historical_incidents"] = ""
+
+            rca = self.rca_service.analyze(
+                evidence
+            )
+
+        PipelineLogger.key_value(
+            "RCA Analysis",
+            f"{(time.perf_counter()-rca_started)*1000:.2f} ms"
+        )
 
         incident.rca = rca
 
-        print()
-        print("Root Cause")
+        print("\nROOT CAUSE")
         print(rca["root_cause"])
 
-        print()
-
-        PipelineLogger.key_value(
-            "Confidence",
-            f"{rca['confidence']*100:.1f}%"
-        )
-
-        PipelineLogger.key_value(
-            "Impact",
-            rca["impact"]
-        )
-
-        print()
-
-        print("Resolution")
+        print("\nREMEDIATION")
 
         for step in rca["recommended_resolution"]:
 
-            print(f" • {step}")
+            print("•", step)
 
-        # ==========================================================
-        # STEP 9 - Knowledge Base Update
-        # ==========================================================
+        # ======================================================
+        # STEP 10 - KNOWLEDGE BASE UPDATE
+        # ======================================================
 
-        PipelineLogger.header("STEP 9 : KNOWLEDGE BASE UPDATE")
+        PipelineLogger.header(
+            "STEP 10 : KNOWLEDGE BASE UPDATE"
+        )
+
+        # ------------------------------------------------------
+        # Store RCA History
+        # ------------------------------------------------------
 
         self.repository.save(
 
@@ -356,38 +530,125 @@ class ProblemPipeline:
 
         )
 
-        PipelineLogger.success("Knowledge Base Updated")
+        # ------------------------------------------------------
+        # Store Knowledge Base
+        # save() should return:
+        #   True  -> New Incident Inserted
+        #   False -> Existing Incident Updated
+        # ------------------------------------------------------
 
-        if incident.snow:
+        is_new_incident = self.knowledge_repository.save(
 
-            self.dedup_repository.create(
+            parsed_alert=parsed,
 
-                problem_id=parsed.original_problem_id,
+            incident=incident,
 
-                incident_number=incident.snow["number"],
+            trigger=trigger,
 
-                host=parsed.host,
+            playbook=playbook,
 
-                problem=parsed.problem
+            metrics=incident.metrics,
 
-            )
+            log_summary=log_summary,
 
-            PipelineLogger.success("Dedup Record Created")
-
-        PipelineLogger.key_value(
-
-            "Problem ID",
-
-            parsed.original_problem_id
+            rca=rca
 
         )
 
+        # ------------------------------------------------------
+        # Build document for FAISS
+        # ------------------------------------------------------
+
+        new_document = {
+
+            "problem_id": parsed.original_problem_id,
+
+            "trigger_id": str(trigger.triggerid),
+
+            "host": parsed.host,
+
+            "problem": parsed.problem,
+
+            "severity": parsed.severity,
+
+            "technology": playbook.get(
+                "technology",
+                ""
+            ),
+
+            "metrics": incident.metrics,
+
+            "root_cause": rca.get(
+                "root_cause",
+                ""
+            ),
+
+            "impact": rca.get(
+                "impact",
+                ""
+            ),
+
+            "confidence": rca.get(
+                "confidence",
+                0
+            ),
+
+            "recommended_resolution": rca.get(
+                "recommended_resolution",
+                []
+            ),
+
+            "reasoning": rca.get(
+                "reasoning",
+                []
+            ),
+
+            "next_diagnostics": rca.get(
+                "next_diagnostics",
+                []
+            ),
+
+            "log_summary": log_summary or "",
+
+            "similarity": 1.0
+
+        }
+
+        # ------------------------------------------------------
+        # Update FAISS only for NEW incidents
+        # ------------------------------------------------------
+
+        if is_new_incident:
+
+            self.semantic_search.add_document(
+                new_document
+            )
+
+            PipelineLogger.success(
+                "FAISS Index Updated"
+            )
+
+            PipelineLogger.success(
+                "Knowledge Base Inserted (New Incident)"
+            )
+
+        else:
+
+            PipelineLogger.info(
+                "Knowledge Base Updated (Existing Incident)"
+            )
+
+            PipelineLogger.info(
+                "Skipping FAISS update (already indexed)."
+            )
+
+        PipelineLogger.success(
+            "Knowledge Base Updated"
+        )
+
         PipelineLogger.key_value(
-
             "Stored",
-
-            "SQLite"
-
+            "SQLite + FAISS"
         )
 
         return incident
