@@ -1,0 +1,97 @@
+{
+    "technology": "ssh_service",
+    "collector": "systemd_process",
+    "confidence": 0.98,
+    "metrics": [
+        {
+            "key": "proc.num[sshd]",
+            "reason": "Directly indicates whether the sshd process is running; zero means the SSH service is down.",
+            "priority": "Critical"
+        },
+        {
+            "key": "net.tcp.listen[22]",
+            "reason": "Shows if the SSH port (22) is listening; if not, clients cannot connect even if sshd is alive.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.socket.conn_count[\"ssh.socket\"]",
+            "reason": "Number of active SSH socket connections; helps verify if the socket is functional.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.socket.conn_accepted.rate[\"ssh.socket\"]",
+            "reason": "Rate of accepted SSH connections; a drop to zero may indicate a socket or firewall issue.",
+            "priority": "Critical"
+        },
+        {
+            "key": "systemd.service.active_state[\"ufw.service\"]",
+            "reason": "Firewall status; if inactive or mis\u2011configured it could block port 22.",
+            "priority": "High"
+        },
+        {
+            "key": "systemd.service.active_state[\"systemd-resolved.service\"]",
+            "reason": "DNS resolver service; SSH may fail if name resolution is broken.",
+            "priority": "High"
+        },
+        {
+            "key": "system.cpu.util[,iowait]",
+            "reason": "High I/O wait can stall sshd responsiveness and cause it to terminate.",
+            "priority": "High"
+        },
+        {
+            "key": "system.cpu.util[,idle]",
+            "reason": "Overall CPU availability; low idle may indicate resource starvation affecting sshd.",
+            "priority": "High"
+        },
+        {
+            "key": "vm.memory.util",
+            "reason": "Memory pressure can cause the sshd process to be killed by the OOM killer.",
+            "priority": "High"
+        },
+        {
+            "key": "system.swap.size[,free]",
+            "reason": "Swap exhaustion can also lead to OOM conditions impacting sshd.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.uptime",
+            "reason": "Recent reboot could explain a missing sshd process if the service failed to start.",
+            "priority": "Medium"
+        },
+        {
+            "key": "system.boottime",
+            "reason": "Correlates uptime with service start times for timeline analysis.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.in[\"eth0\",errors]",
+            "reason": "Inbound interface errors may prevent SSH packets from being received.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.out[\"eth0\",errors]",
+            "reason": "Outbound interface errors may prevent SSH responses from being sent.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.in[\"eth0\",dropped]",
+            "reason": "Dropped inbound packets can indicate network congestion or mis\u2011configuration affecting SSH.",
+            "priority": "Medium"
+        },
+        {
+            "key": "net.if.out[\"eth0\",dropped]",
+            "reason": "Dropped outbound packets can also impact SSH session stability.",
+            "priority": "Medium"
+        },
+        {
+            "key": "kernel.maxproc",
+            "reason": "Maximum allowed processes; hitting this limit can prevent sshd from spawning.",
+            "priority": "Medium"
+        },
+        {
+            "key": "kernel.maxfiles",
+            "reason": "Maximum file descriptors; exhaustion can stop sshd from accepting new connections.",
+            "priority": "Medium"
+        }
+    ]
+}

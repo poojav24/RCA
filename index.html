@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Near Zero Command Center — Enterprise AIOps Platform" />
+  <title>Near Zero Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">NZ</div>
+        <div class="brand-text">
+          <h1>Near Zero</h1>
+          <p>Command Center</p>
+        </div>
+      </div>
+
+      <nav class="nav-links" aria-label="Primary">
+        <button class="nav-link active" data-view="dashboard" type="button">
+          <i class="fas fa-chart-line"></i><span>Dashboard</span>
+        </button>
+        <button class="nav-link" data-view="investigation" type="button">
+          <i class="fas fa-microscope"></i><span>Live Investigation</span>
+        </button>
+        <button class="nav-link" data-view="alerts" type="button">
+          <i class="fas fa-bell"></i><span>Active Alerts</span>
+          <span class="nav-badge" id="nav-alert-count">0</span>
+        </button>
+        <button class="nav-link" data-view="rca" type="button">
+          <i class="fas fa-brain"></i><span>RCA Analysis</span>
+        </button>
+        <button class="nav-link" data-view="knowledge" type="button">
+          <i class="fas fa-book-open"></i><span>Knowledge Repository</span>
+        </button>
+        <button class="nav-link" data-view="search" type="button">
+          <i class="fas fa-wand-magic-sparkles"></i><span>AI Search</span>
+        </button>
+        <button class="nav-link" data-view="metrics" type="button">
+          <i class="fas fa-gauge-high"></i><span>Metrics Explorer</span>
+        </button>
+        <button class="nav-link" data-view="logs" type="button">
+          <i class="fas fa-terminal"></i><span>Logs Explorer</span>
+        </button>
+        <button class="nav-link" data-view="servicenow" type="button">
+          <i class="fas fa-ticket"></i><span>ServiceNow</span>
+        </button>
+        <button class="nav-link" data-view="analytics" type="button">
+          <i class="fas fa-chart-pie"></i><span>Analytics</span>
+        </button>
+        <button class="nav-link" data-view="roadmap" type="button">
+          <i class="fas fa-road"></i><span>Roadmap</span>
+        </button>
+        <button class="nav-link" data-view="settings" type="button">
+          <i class="fas fa-sliders"></i><span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status-card">
+          <div class="sidebar-status-row">
+            <span class="status-dot live" id="sidebar-dot"></span>
+            <span id="sidebar-status">Connected</span>
+          </div>
+          <div class="backend-indicators">
+            <div class="indicator" title="Alert Source"><i class="fas fa-server"></i><span>Alerts</span></div>
+            <div class="indicator" title="ITSM"><i class="fas fa-ticket"></i><span>ITSM</span></div>
+            <div class="indicator" title="Logs"><i class="fas fa-scroll"></i><span>Logs</span></div>
+            <div class="indicator" title="AI Engine"><i class="fas fa-brain"></i><span>AI</span></div>
+          </div>
+          <small id="polling-status">Auto-refresh every 30s</small>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-column">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn-icon sidebar-toggle" id="sidebar-toggle" type="button" title="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div>
+            <p class="eyebrow">Enterprise AIOps Platform</p>
+            <h2 id="page-title">Dashboard</h2>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <div class="global-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="global-search" placeholder="Search incidents, hosts, technologies…" autocomplete="off" />
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="refresh-indicator" id="refresh-indicator" title="Auto-refresh">
+            <i class="fas fa-sync-alt"></i>
+            <span id="refresh-label">Live</span>
+          </div>
+          <div id="backend-status" class="status-pill live">Operational</div>
+          <div id="last-updated" class="muted topbar-meta">Updated —</div>
+          <button class="btn-icon" id="notify-bell" type="button" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="notify-dot" id="notify-dot" hidden></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="views-container">
+          <section id="view-dashboard" class="view active" aria-label="Dashboard"></section>
+          <section id="view-investigation" class="view" aria-label="Live Investigation"></section>
+          <section id="view-alerts" class="view" aria-label="Active Alerts"></section>
+          <section id="view-rca" class="view" aria-label="RCA Analysis"></section>
+          <section id="view-knowledge" class="view" aria-label="Knowledge Repository"></section>
+          <section id="view-search" class="view" aria-label="AI Search"></section>
+          <section id="view-metrics" class="view" aria-label="Metrics Explorer"></section>
+          <section id="view-logs" class="view" aria-label="Logs Explorer"></section>
+          <section id="view-servicenow" class="view" aria-label="ServiceNow"></section>
+          <section id="view-analytics" class="view" aria-label="Analytics"></section>
+          <section id="view-roadmap" class="view" aria-label="Roadmap"></section>
+          <section id="view-settings" class="view" aria-label="Settings"></section>
+        </div>
+      </main>
+
+      <footer class="statusbar">
+        <div class="statusbar-left">
+          <span><i class="fas fa-circle status-dot-inline live"></i> AI Investigation Engine</span>
+          <span class="divider">|</span>
+          <span id="status-selected">No investigation selected</span>
+        </div>
+        <div class="statusbar-right">
+          <span id="status-counts">0 alerts · 0 knowledge</span>
+          <span class="divider">|</span>
+          <span>NZCC v2.0</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+  <!-- CHART MODAL -->
+  <div id="chart-modal" class="modal" role="dialog" aria-modal="true" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <button class="modal-close" type="button" data-close-modal>&times;</button>
+      <div id="modal-chart"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="investigation.js"></script>
+  <script src="alerts.js"></script>
+  <script src="rca.js"></script>
+  <script src="knowledge.js"></script>
+  <script src="metrics.js"></script>
+  <script src="logs.js"></script>
+  <script src="analytics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

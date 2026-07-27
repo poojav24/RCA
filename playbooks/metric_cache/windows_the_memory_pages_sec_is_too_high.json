@@ -1,0 +1,162 @@
+{
+    "technology": "windows_memory",
+    "collector": "zabbix_agent",
+    "confidence": 0.97,
+    "metrics": [
+        {
+            "key": "perf_counter_en[\"\\\\Memory\\\\Pages/sec\"]",
+            "reason": "Primary indicator of memory pressure; high values show frequent paging activity.",
+            "priority": "Critical"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Memory\\\\Page Faults/sec\"]",
+            "reason": "Correlates with Pages/sec; a rise indicates the system is unable to find pages in RAM and must fetch from disk.",
+            "priority": "Critical"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Memory\\\\Cache Bytes\"]",
+            "reason": "Shows how much memory is being used for cache; a drop may force more page reads.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Memory\\\\Free System Page Table Entries\"]",
+            "reason": "Low values can cause excessive paging because the OS cannot allocate page tables efficiently.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Memory\\\\Pool Nonpaged Bytes\"]",
+            "reason": "Non\u2011paged pool growth often precedes memory pressure; high values can starve regular allocations.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Paging file(_Total)\\\\% Usage\"]",
+            "reason": "Direct measurement of paging file consumption; high usage confirms that RAM is insufficient.",
+            "priority": "Critical"
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "CPU saturation can exacerbate paging; ensures the issue isn\u2019t caused by CPU bottlenecks.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Processor Information(_total)\\\\% User Time\"]",
+            "reason": "User\u2011mode CPU consumption; helps differentiate CPU\u2011bound vs memory\u2011bound load.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Processor Information(_total)\\\\% Privileged Time\"]",
+            "reason": "Kernel\u2011mode CPU usage; high values may indicate driver or OS activity contributing to paging.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Processor Information(_total)\\\\% DPC Time\"]",
+            "reason": "Deferred Procedure Calls can cause spikes in memory activity; useful for root\u2011cause.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\Processor Information(_total)\\\\% Interrupt Time\"]",
+            "reason": "Interrupt handling load; excessive interrupts can increase paging pressure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\System\\\\Context Switches/sec\"]",
+            "reason": "High context\u2011switch rate often accompanies memory pressure and can amplify paging.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\System\\\\Processor Queue Length\"]",
+            "reason": "Queue length > 2 per core indicates the system is waiting for CPU, which may be a side\u2011effect of memory thrashing.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\System\\\\Threads\"]",
+            "reason": "Thread count growth can increase memory consumption; useful to see if thread explosion is causing pressure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vm.memory.util",
+            "reason": "Overall memory utilization percentage; validates that RAM is near capacity.",
+            "priority": "Critical"
+        },
+        {
+            "key": "vm.memory.size[used]",
+            "reason": "Absolute amount of RAM in use; helps quantify pressure.",
+            "priority": "Critical"
+        },
+        {
+            "key": "vm.memory.size[total]",
+            "reason": "Total physical memory; needed to calculate utilization.",
+            "priority": "Critical"
+        },
+        {
+            "key": "system.swap.free",
+            "reason": "Free space in the paging file; low free space can cause high Pages/sec.",
+            "priority": "High"
+        },
+        {
+            "key": "system.swap.pfree",
+            "reason": "Percentage of free swap; complements swap.free metric.",
+            "priority": "High"
+        },
+        {
+            "key": "system.swap.size[,total]",
+            "reason": "Total size of the paging file; required for context on swap usage.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,pused]",
+            "reason": "Disk C: space usage; low free space can affect paging file size and performance.",
+            "priority": "Medium"
+        },
+        {
+            "key": "vfs.fs.dependent.size[D:,pused]",
+            "reason": "Disk D: space usage; same rationale as C: drive.",
+            "priority": "Medium"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\PhysicalDisk(0 C:)\\\\% Idle Time\",60]",
+            "reason": "Disk idle time; low idle time may indicate heavy I/O caused by paging.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\PhysicalDisk(0 C:)\\\\Avg. Disk sec/Read\",60]",
+            "reason": "Average read latency; high latency can worsen paging impact.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\PhysicalDisk(0 C:)\\\\Avg. Disk sec/Write\",60]",
+            "reason": "Average write latency; important when paging file writes are frequent.",
+            "priority": "High"
+        },
+        {
+            "key": "perf_counter_en[\"\\\\PhysicalDisk(0 C:)\\\\Current Disk Queue Length\",60]",
+            "reason": "Current I/O queue depth; a growing queue often accompanies paging activity.",
+            "priority": "High"
+        },
+        {
+            "key": "net.if.in[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Network receive errors; while not directly memory\u2011related, they can indicate broader system stress.",
+            "priority": "Low"
+        },
+        {
+            "key": "net.if.out[\"{DABA9697-5CFA-4E99-8A95-B5158457941F}\",errors]",
+            "reason": "Network transmit errors; same rationale as above.",
+            "priority": "Low"
+        },
+        {
+            "key": "service.info[\"Zabbix Agent 2\",state]",
+            "reason": "Ensures the monitoring agent itself is healthy; a failing agent could produce false alerts.",
+            "priority": "Low"
+        },
+        {
+            "key": "service.info[\"neo4j\",state]",
+            "reason": "Neo4j is a memory\u2011intensive service; its state helps determine if it contributes to pressure.",
+            "priority": "Medium"
+        },
+        {
+            "key": "service.info[\"redis\",state]",
+            "reason": "Redis can consume significant RAM; checking its state aids correlation.",
+            "priority": "Medium"
+        }
+    ]
+}

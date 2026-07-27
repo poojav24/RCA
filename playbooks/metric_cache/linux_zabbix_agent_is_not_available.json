@@ -1,0 +1,17 @@
+{
+    "technology": "linux_service",
+    "metrics": [
+        {
+            "key": "systemd.service.active_state[zabbix-agent2.service]",
+            "reason": "Checks whether the Zabbix agent service is running."
+        },
+        {
+            "key": "agent.ping",
+            "reason": "Checks the availability of the Zabbix agent."
+        },
+        {
+            "key": "systemd.service.load_state[zabbix-agent2.service]",
+            "reason": "Checks the load state of the Zabbix agent service."
+        }
+    ]
+}

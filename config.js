@@ -1,0 +1,70 @@
+window.NZCC_CONFIG = {
+  APP_NAME: 'Near Zero Command Center',
+  VERSION: '2.0.0',
+  API_BASE: '/api',
+  DEFAULT_POLLING_INTERVAL: 30,
+  DEFAULT_THEME: 'dark',
+  DEMO_MODE: false,
+  ENDPOINTS: {
+    dashboard: '/dashboard',
+    alerts: '/alerts',
+    alertDetails: '/alert-details',
+    rca: '/rca',
+    metrics: '/metrics',
+    logs: '/logs',
+    knowledge: '/knowledge',
+    search: '/search',
+    servicenow: '/servicenow',
+    analytics: '/analytics',
+    systemStatus: '/system-status'
+  },
+  PIPELINE_STAGES: [
+    'Alert Received',
+    'Alert Parsed',
+    'ServiceNow Correlation',
+    'Trigger Discovery',
+    'Playbook Loaded',
+    'Historical Search',
+    'Metric Collection',
+    'Log Collection',
+    'Evidence Correlation',
+    'AI RCA',
+    'Knowledge Update'
+  ],
+  PAGE_TITLES: {
+    dashboard: 'Dashboard',
+    investigation: 'Live Investigation',
+    alerts: 'Active Alerts',
+    rca: 'RCA Analysis',
+    knowledge: 'Knowledge Repository',
+    search: 'AI Search',
+    metrics: 'Metrics Explorer',
+    logs: 'Logs Explorer',
+    servicenow: 'ServiceNow',
+    analytics: 'Analytics',
+    roadmap: 'Roadmap',
+    settings: 'Settings'
+  },
+  SUGGESTED_QUESTIONS: [
+    'What caused the latest critical alert?',
+    'Which hosts are most frequently affected?',
+    'Show similar incidents for high CPU utilization',
+    'What resolutions worked for Redis failures?',
+    'Summarize open investigations this week'
+  ],
+  COLORS: {
+    critical: '#EF4444',
+    high: '#F97316',
+    average: '#F59E0B',
+    information: '#3B82F6',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    accent: '#F97316',
+    bg: '#0B1220',
+    bgSecondary: '#111827',
+    card: '#1F2937',
+    border: '#374151',
+    text: '#F5F7FB',
+    muted: '#9CA3AF'
+  }
+};

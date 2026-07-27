@@ -1,0 +1,17 @@
+{
+    "technology": "windows_service",
+    "metrics": [
+        {
+            "key": "service.info[AppXSvc,state]",
+            "reason": "Checks whether the AppXSvc service is running."
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Checks overall CPU utilization to see if it's related to the service issue."
+        },
+        {
+            "key": "vfs.fs.dependent.size[C:,used]",
+            "reason": "Checks disk usage to see if it's related to the service issue."
+        }
+    ]
+}

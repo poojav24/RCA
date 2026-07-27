@@ -1,0 +1,29 @@
+{
+    "technology": "linux",
+    "metrics": [
+        {
+            "key": "system.uptime",
+            "reason": "Checks system uptime to verify the restart."
+        },
+        {
+            "key": "system.boottime",
+            "reason": "Checks system boot time to verify the restart."
+        },
+        {
+            "key": "system.cpu.util",
+            "reason": "Checks CPU utilization after restart."
+        },
+        {
+            "key": "vfs.fs.dependent.size[/,used]",
+            "reason": "Checks disk usage after restart."
+        },
+        {
+            "key": "system.swap.size[,free]",
+            "reason": "Checks swap space availability after restart."
+        },
+        {
+            "key": "system.users.num",
+            "reason": "Checks number of users after restart."
+        }
+    ]
+}
